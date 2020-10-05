@@ -55,6 +55,7 @@ Requires: struts >= 0:1.3.0
 Requires: tomcat-taglibs-standard
 Requires: xalan-j2 >= 0:2.6.0
 Requires: xerces-j2
+Requires: snakeyaml
 %if 0%{?fedora} || 0%{?rhel} >= 7
 Requires:      apache-commons-cli
 Requires:      apache-commons-codec
@@ -239,6 +240,7 @@ BuildRequires: stringtree-json
 BuildRequires: struts >= 0:1.3.0
 BuildRequires: tanukiwrapper
 BuildRequires: tomcat-taglibs-standard
+BuildRequires: snakeyaml
 %if 0%{?run_checkstyle}
 BuildRequires: checkstyle
 %if 0%{?fedora} || 0%{?rhel} >= 7
@@ -668,6 +670,7 @@ fi
 %{jardir}/mchange-commons*.jar
 %{jardir}/slf4j_api.jar
 %{jardir}/slf4j_log4j12*.jar
+%{jardir}/snakeyaml.jar
 %{jardir}/*jboss-logging.jar
 %{jardir}/tomcat-taglibs-standard_taglibs-build-tools.jar
 %{jardir}/tomcat-taglibs-standard_taglibs-standard-compat.jar
@@ -756,6 +759,9 @@ fi
 %{_prefix}/share/rhn/search/lib/postgresql-jdbc.jar
 
 %changelog
+
+* Tue Sep 8 2020 Laurence Rochfort <laurence.rochfort@oracle.com> 2.10.19-1
+- Add snakeyaml.jar to build config, rpm requirements, and file list
 
 * Thu May 28 2020 Laurence Rochfort <laurence.rochfort@oracle.com> 2.10.19-1
 - Update taskomatic to use instant client to 18.5 [Orabug: 31413086]

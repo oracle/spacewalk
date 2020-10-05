@@ -57,6 +57,7 @@ public class ChannelPackagesAddAction extends ChannelPackagesBaseAction {
     private final String ALL_PACKAGES_SELECTED = "all_selected";
     private final String ORPHAN_PACKAGES = "orphan_packages";
     private final String ORPHAN_PACKAGES_SELECTED = "orphan_selected";
+    private final String SCID = "scid";
 
     /** {@inheritDoc} */
     public ActionForward execute(ActionMapping mapping,
@@ -83,29 +84,12 @@ public class ChannelPackagesAddAction extends ChannelPackagesBaseAction {
 
         RhnSet set =  RhnSetDecl.PACKAGES_TO_ADD.get(user);
 
-        //Since if we are going to the confirm screen, we don't need to
-        //actually do anything else, so lets go ahead and forward and save some time
-        String button = LocalizationService.getInstance().getMessage(
-        "channel.jsp.package.addbutton");
-        if (button.equals(request.getParameter(RhnHelper.CONFIRM_FORWARD)) &&
-            set.size() > 0) {
-            Map<String, Object> params = new HashMap<String, Object>();
-            params.put("cid", cid);
-            return getStrutsDelegate().forwardParams(
-                                mapping.findForward(RhnHelper.CONFIRM_FORWARD), params);
-        }
-
-
-
-
         String selectedChan = request.getParameter(SELECTED_CHANNEL);
         DataResult result = null;
 
 
         //selected channel id
         long scid = 0;
-
-
         //go ahead and set these to false.  We'll change them down a bit  if we need to
         request.setAttribute(ALL_PACKAGES_SELECTED, false);
         request.setAttribute(ORPHAN_PACKAGES_SELECTED, false);
@@ -135,6 +119,17 @@ public class ChannelPackagesAddAction extends ChannelPackagesBaseAction {
             result = PackageManager.lookupPackageForChannelFromChannel(scid, cid);
         }
 
+        // Forward to the confirm screen
+        String button = LocalizationService.getInstance().getMessage(
+        "channel.jsp.package.addbutton");
+        if (button.equals(request.getParameter(RhnHelper.CONFIRM_FORWARD)) &&
+            set.size() > 0) {
+            request.getSession().setAttribute(SCID, scid);
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put("cid", cid);
+            return getStrutsDelegate().forwardParams(
+                                mapping.findForward(RhnHelper.CONFIRM_FORWARD), params);
+        }
 
         //Add Red Hat Base Channels, and custom base channels to the list, and if one
         //      is selected, select it

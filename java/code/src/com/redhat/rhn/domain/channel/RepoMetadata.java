@@ -14,6 +14,9 @@
  */
 package com.redhat.rhn.domain.channel;
 
+import com.redhat.rhn.common.conf.Config;
+import com.redhat.rhn.common.conf.ConfigDefaults;
+
 import com.redhat.rhn.domain.BaseDomainHelper;
 /**
  *
@@ -48,6 +51,16 @@ public class RepoMetadata extends BaseDomainHelper {
      */
     public String getRelativeFilename() {
         return relativeFilename;
+    }
+
+
+    /**
+     *
+     * @return Returns fully qualified filename
+     */
+    public String getFQFilename() {
+        return Config.get().getString(ConfigDefaults.MOUNT_POINT) +
+            "/" + getRelativeFilename();
     }
 
     /**

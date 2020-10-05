@@ -31,6 +31,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Package
@@ -690,5 +691,30 @@ public class Package extends BaseDomainHelper {
         }
         return pkgFile;
     }
+
+    /**
+     * Return a RegEx that can be used to match rpm filenames found in modules.yaml
+     * @return Returns the modular filename regex
+     */
+    public String getModuleRegExFilenamePattern() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(getPackageName().getName());
+        buf.append("-");
+        String headLiteral = Pattern.quote(buf.toString());
+
+        buf.setLength(0);
+        buf.append(":");
+        buf.append(getPackageEvr().getVersion());
+        buf.append("-");
+        buf.append(getPackageEvr().getRelease());
+        buf.append(".");
+        buf.append(getPackageArch().getLabel());
+        buf.append(".");
+        buf.append(getPackageArch().getArchType().getLabel());
+        String tailLiteral = Pattern.quote(buf.toString());
+
+        return headLiteral + "\\d" + tailLiteral;
+    }
+
 
 }

@@ -15,6 +15,8 @@
 package com.redhat.rhn.manager.rhnpackage;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -59,6 +61,7 @@ import com.redhat.rhn.domain.role.RoleFactory;
 import com.redhat.rhn.domain.server.Server;
 import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.dto.PackageComparison;
+import com.redhat.rhn.frontend.dto.PackageDto;
 import com.redhat.rhn.frontend.dto.PackageFileDto;
 import com.redhat.rhn.frontend.dto.UpgradablePackageListItem;
 import com.redhat.rhn.frontend.listview.PageControl;
@@ -70,6 +73,8 @@ import com.redhat.rhn.manager.rhnset.RhnSetDecl;
 import com.redhat.rhn.manager.rhnset.RhnSetManager;
 import com.redhat.rhn.manager.satellite.SystemCommandExecutor;
 import com.redhat.rhn.manager.system.IncompatibleArchException;
+import com.redhat.rhn.yaml.modulemd.Module;
+import com.redhat.rhn.yaml.modulemd.ModuleYamlManager;
 
 /**
  * PackageManager
@@ -1064,18 +1069,116 @@ public class PackageManager extends BaseManager {
     /**
      * Add packages to channel whos package_ids are in a set
      * @param user the user doing the pushing
-     * @param cid the channel to push packages to
+     * @param sourceCid the source channel for the packages
+     * @param destCid the channel to push packages to
      * @param set the set of packages
      */
-    public static void addChannelPackagesFromSet(User user, Long cid, RhnSet set) {
+    public static void addChannelPackagesFromSet(User user, Long sourceCid, Long destCid, RhnSet set) {
+        Channel sourceChan = ChannelFactory.lookupById(sourceCid);
+        Channel destChan = ChannelFactory.lookupById(destCid);
+
+        if (sourceChan != null && destChan != null &&
+            sourceChan.getModules() != null && destChan.getModules() != null) {
+            try {
+                Set<Module> sourcePkgModulesSet = getModulesSetForPackages(user, sourceChan, set);
+                Set<Module> destChannelModulesSet = ModuleYamlManager.getModuleSet(destChan);
+                addMissingModulesToYamlFile(sourcePkgModulesSet, destChannelModulesSet, sourceChan, destChan);
+                RhnSet missingModulePkgs = getNeededPackageSetForModuleSet(sourcePkgModulesSet, sourceChan, destChan,
+                                                                           RhnSetDecl.PACKAGES_TO_ADD, user);
+                set.addAll(missingModulePkgs);
+                RhnSetManager.store(set);
+            }
+            catch (Exception e) {
+                LOG.error("Unable to copy modules data when adding package to channel. " +
+                          "See Tomcat log for root cause");
+            }
+        }
+
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("user_id", user.getId());
-        params.put("cid", cid);
+        params.put("cid", destCid);
         params.put("set_label", set.getLabel());
-        WriteMode writeMode = ModeFactory.getWriteMode("Package_queries",
-                "insert_channel_packages_in_set");
+        WriteMode writeMode = ModeFactory.getWriteMode("Package_queries", "insert_channel_packages_in_set");
         writeMode.executeUpdate(params);
         RhnSetManager.store(set);
+    }
+
+    private static RhnSet getNeededPackageSetForModuleSet(Set<Module> moduleSet, Channel sourceChan, Channel destChan,
+                                                          RhnSetDecl decl, User user) {
+        RhnSet set = decl.get(user);
+
+        // Find the module rpms names so we can restrict the missing package search
+        List<String> modulesRpmsNameList = new ArrayList<String>();
+        for (Module mod : moduleSet) {
+            for (String rpmFileNameString : mod.getRpms()) {
+                String pkgName = rpmFileNameString.replaceFirst("-\\d:.*", "");
+                modulesRpmsNameList.add(pkgName);
+            }
+        }
+
+        List<PackageDto> pkgList = ChannelManager.listMatchingPackageIdsNotInOtherChannel(sourceChan, destChan,
+                                                                                          modulesRpmsNameList);
+
+        for (PackageDto pdto : pkgList) {
+            Package pkg = PackageManager.lookupByIdAndUser(pdto.getId(), user);
+            String pkgFileRegEx = pkg.getModuleRegExFilenamePattern();
+            for (Module mod : moduleSet) {
+                for (String modRpm : mod.getRpms()) {
+                    modRpm = modRpm + ".rpm";
+                    if (modRpm.matches(pkgFileRegEx)) {
+                        set.addElement(pkg.getId());
+                        break;
+                    }
+                }
+            }
+        }
+        return set;
+    }
+
+    private static void addMissingModulesToYamlFile(Set<Module> sourceSet, Set<Module> destSet,
+                                                    Channel sourceChan, Channel destChan)
+        throws FileNotFoundException, IOException {
+        HashSet<Module> moduleSet = new HashSet<Module>();
+        moduleSet.addAll(sourceSet);
+        moduleSet.removeAll(destSet);
+        if (moduleSet.isEmpty()) {
+            return;
+        }
+
+        ModuleYamlManager.addModulesToYamlFile(moduleSet, sourceChan, destChan);
+    }
+
+    private static Set<Module> getModulesSetForPackages(User user, Channel c, RhnSet pkgSet) {
+        Iterable<Object> moduleIter;
+        Set<Module> moduleSet = new HashSet<Module>();
+        List<String> packageFileRegExList = new ArrayList<String>();
+
+        try {
+            moduleIter = ModuleYamlManager.getModuleIter(c);
+        }
+        catch (FileNotFoundException e) {
+            return moduleSet;
+        }
+
+        for (Long pid : pkgSet.getElementValues()) {
+            Package p = lookupByIdAndUser(pid, user);
+            packageFileRegExList.add(p.getModuleRegExFilenamePattern());
+        }
+
+        for (Object yamlModuleDoc : moduleIter) {
+            Module module = ModuleYamlManager.createModuleFromYamlDoc(yamlModuleDoc);
+            for (String modRpm : module.getRpms()) {
+                modRpm = modRpm + ".rpm";
+                for (String pkgRpmRegex : packageFileRegExList) {
+                    if (modRpm.matches(pkgRpmRegex)) {
+                        moduleSet.add(module);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return moduleSet;
     }
 
     /**
