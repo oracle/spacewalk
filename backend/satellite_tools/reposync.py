@@ -585,7 +585,10 @@ class RepoSync(object):
         fileutils.createPath(os.path.join(CFG.MOUNT_POINT, 'rhn'))  # if the directory exists update ownership only
         for root, dirs, files in os.walk(os.path.join(CFG.MOUNT_POINT, 'rhn')):
             for d in dirs:
-                fileutils.setPermsPath(os.path.join(root, d), group='apache')
+                if d == 'modules':
+                    fileutils.setPermsPath(os.path.join(root, d), group='apache', chmod=0o770)
+                else:
+                    fileutils.setPermsPath(os.path.join(root, d), group='apache')
             for f in files:
                 fileutils.setPermsPath(os.path.join(root, f), group='apache')
         elapsed_time = datetime.now() - start_time
@@ -636,7 +639,7 @@ class RepoSync(object):
             absmoddir = os.path.join(CFG.MOUNT_POINT, relative_dir)
             st = os.stat(absmoddir)
             if not bool(st.st_mode & stat.S_IWGRP):
-                os.chmod(absmoddir, 0o770)
+                fileutils.setPermsPath(absmoddir, group='apache', chmod=0o770)
         relativepath = os.path.join(relativedir, basename)
         abspath = os.path.join(absdir, basename)
         for suffix in ['.gz', '.bz', '.xz']:
