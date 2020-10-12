@@ -74,8 +74,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
@@ -1024,6 +1031,25 @@ public class ChannelManager extends BaseManager {
         SelectMode m = ModeFactory.getMode("Package_queries", mode);
 
         return m.execute(params);
+    }
+
+    /**
+     * Returns list of matching packages not in other channel. PackageDto only has package Id for speed.
+     * @param sourceChan channel that's the left operand
+     * @param destChan channel that's the right operand
+     * @param pkgNamesList the list of packages to filter the query
+     * @return list of packages in sourceChan not in destChan
+     */
+    public static List<PackageDto> listMatchingPackageIdsNotInOtherChannel(Channel sourceChan, Channel destChan,
+                                                                           List<String> pkgNamesList) {
+        String mode = "fast_matching_package_ids_not_in_other_channel";
+        Map<String, Long> params = new HashMap<String, Long>();
+        params.put("scid", sourceChan.getId());
+        params.put("dcid", destChan.getId());
+
+        SelectMode m = ModeFactory.getMode("Package_queries", mode);
+
+        return m.execute(params, pkgNamesList);
     }
 
     /**
@@ -2639,8 +2665,27 @@ public class ChannelManager extends BaseManager {
         try {
             File originalFile = new File(originalFQPath);
             File cloneFile = new File(cloneFQPath);
+
             Files.createDirectories(cloneFile.getParentFile().toPath());
             Files.copy(originalFile.toPath(), cloneFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            // Have to set permissions after dir/file creation due to umask having precedence
+            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwxrwx---");
+            Files.setPosixFilePermissions(cloneFile.getParentFile().toPath(), permissions);
+            Files.setPosixFilePermissions(cloneFile.toPath(), permissions);
+
+            // Get OS apache group
+            UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
+            GroupPrincipal group = lookupService.lookupPrincipalByGroupName("apache");
+
+            PosixFileAttributeView posixFav;
+            // Set modules/<channel_name> dir group
+            posixFav = Files.getFileAttributeView(cloneFile.getParentFile().toPath(), PosixFileAttributeView.class,
+                                                  LinkOption.NOFOLLOW_LINKS);
+            posixFav.setGroup(group);
+            // Set modules.yaml file group
+            posixFav = Files.getFileAttributeView(cloneFile.toPath(), PosixFileAttributeView.class,
+                                                  LinkOption.NOFOLLOW_LINKS);
+            posixFav.setGroup(group);
         }
         catch (Exception e) {
             String errMsg = "Unable to clone modules.yaml for channel label: " + original.getLabel();

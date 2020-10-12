@@ -18914,6 +18914,10 @@ given channel.</source>
         <source>{0} package(s) added to channel {1}
         </source>
       </trans-unit>
+      <trans-unit id="channel.jsp.package.addsuccesswithmoduledependencies">
+        <source>The {0} package(s) requested were added to channel {1}. {2} additional package(s) were also added to satisfy channel module package requirements
+        </source>
+      </trans-unit>
       <trans-unit id="channel.jsp.package.addbutton">
         <source>Add Package(s)</source>
       </trans-unit>

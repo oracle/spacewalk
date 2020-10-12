@@ -17,7 +17,6 @@
       <bean:message key="channel.jsp.package.add.confirm.title"/>
     </h2>
 <bean:message key="channel.jsp.package.add.confirm.msg"/>
-
 <rl:listset name="packageSet" legend="system-group">
 <rhn:csrf />
 

@@ -48,6 +48,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  * ChannelPackagesAction
@@ -56,6 +57,7 @@ import javax.servlet.http.HttpServletResponse;
 public class ChannelPackagesAddConfirmAction extends RhnAction {
 
     private final String LIST_NAME = "packageList";
+    private final String SCID = "scid";
 
 
     /** {@inheritDoc} */
@@ -65,10 +67,24 @@ public class ChannelPackagesAddConfirmAction extends RhnAction {
             HttpServletResponse response) {
 
         RequestContext requestContext = new RequestContext(request);
-        User user =  requestContext.getCurrentUser();
+        User user = requestContext.getCurrentUser();
 
         long cid = requestContext.getRequiredParam("cid");
         Channel chan = ChannelFactory.lookupByIdAndUser(cid, user);
+
+        long scid = 0;
+        Channel sourceChan;
+
+        HttpSession session = request.getSession();
+
+        try {
+            String scidStr = String.valueOf(session.getAttribute(SCID));
+            scid = Long.parseLong(scidStr);
+            sourceChan = ChannelFactory.lookupByIdAndUser(scid, user);
+        }
+        catch (NumberFormatException e) {
+            sourceChan = null;
+        }
 
         if (!UserManager.verifyChannelAdmin(user, chan)) {
               throw new PermissionException(RoleFactory.CHANNEL_ADMIN);
@@ -91,14 +107,25 @@ public class ChannelPackagesAddConfirmAction extends RhnAction {
         "channel.jsp.package.addconfirmbutton");
 
         if (button.equals(request.getParameter("confirm")) && set.size() > 0) {
-            int setSize = set.size();
-            addPackages(user, chan, set);
-            ActionMessages msg = new ActionMessages();
-            String[] actionParams = {setSize + "", chan.getName()};
-            msg.add(ActionMessages.GLOBAL_MESSAGE,
-                    new ActionMessage("channel.jsp.package.addsuccess",
-                            actionParams));
+            int setSizeBefore = set.size();
+            addPackages(user, sourceChan, chan, set);
+            int setSizeDelta = set.size() - setSizeBefore;
+            set.clear();
 
+            String msgTmpl;
+            String[] actionParams;
+            if (0 == setSizeDelta) {
+                actionParams = new String[]{ setSizeBefore + "", chan.getName() };
+                msgTmpl = "channel.jsp.package.addsuccess";
+            }
+            else {
+                actionParams = new String[]{ setSizeBefore + "", chan.getName(), setSizeDelta + ""};
+                msgTmpl = "channel.jsp.package.addsuccesswithmoduledependencies";
+            }
+
+            ActionMessages msg = new ActionMessages();
+            msg.add(ActionMessages.GLOBAL_MESSAGE,
+                    new ActionMessage(msgTmpl, actionParams));
             getStrutsDelegate().saveMessages(requestContext.getRequest(), msg);
 
             // Clear the set of packages to add. This way, if the user presses the
@@ -107,6 +134,8 @@ public class ChannelPackagesAddConfirmAction extends RhnAction {
             // that may be added.
             set.clear();
             RhnSetManager.store(set);
+
+            session.removeAttribute(SCID);
 
             Map<String, Object> params = new HashMap<String, Object>();
             params.put("cid", cid);
@@ -119,8 +148,13 @@ public class ChannelPackagesAddConfirmAction extends RhnAction {
     }
 
 
-    private void addPackages(User user, Channel chan, RhnSet set) {
-        PackageManager.addChannelPackagesFromSet(user, chan.getId(), set);
+    private void addPackages(User user, Channel sourceChan, Channel chan, RhnSet set) {
+        Long sourceCid = new Long(0);
+        if (sourceChan != null) {
+            sourceCid = sourceChan.getId();
+        }
+
+        PackageManager.addChannelPackagesFromSet(user, sourceCid, chan.getId(), set);
         chan = (Channel) ChannelFactory.reload(chan);
         List<Long> chanList = new ArrayList<Long>();
         List<Long> packList = new ArrayList<Long>();
@@ -128,7 +162,6 @@ public class ChannelPackagesAddConfirmAction extends RhnAction {
         packList.addAll(set.getElementValues());
         ErrataCacheManager.insertCacheForChannelPackagesAsync(chanList, packList);
         ChannelManager.refreshWithNewestPackages(chan, "web.channel_package_add");
-        set.clear();
     }
 
 }

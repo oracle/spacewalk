@@ -104,7 +104,7 @@
              ${log4j-jars} oro redstone-xmlrpc-client redstone-xmlrpc ${struts-jars} ${tomcat-jars}
              bcprov bcpg jcommon stringtree-json postgresql-jdbc
              ${taglibs} logdriver quartz dwr slf4j-api slf4j-log4j12
-             concurrent velocity simple-core  mockobjects mockobjects-core mockobjects-jdk1.4-j2ee1.3 strutstest" />
+             concurrent velocity simple-core  mockobjects mockobjects-core mockobjects-jdk1.4-j2ee1.3 strutstest snakeyaml" />
 
   <!-- deps needed for testing, but required to build -->
   <property name="test.build.jar.dependencies"
@@ -155,7 +155,7 @@
              ${log4j-jars} oro redstone-xmlrpc-client redstone-xmlrpc ${struts-jars}
              jcommon stringtree-json postgresql-jdbc
              ${taglibs} quartz
-             concurrent simple-core simple-xml" />
+             concurrent simple-core simple-xml snakeyaml" />
 
   <property name="dist.jar.dependencies"
       value="antlr objectweb-asm/asm bcel c3p0 mchange-commons ${cglib}
@@ -167,7 +167,7 @@
              ${tomcat-jars} jpam ${log4j-jars} redstone-xmlrpc-client redstone-xmlrpc
              oro ${oscache} quartz stringtree-json sitemesh ${struts-jars} ${taglibs}
              tanukiwrapper postgresql-jdbc simple-xml
-             xalan-j2 xerces-j2 xml-commons-apis simple-core" />
+             xalan-j2 xerces-j2 xml-commons-apis simple-core snakeyaml" />
 
   <property name="taskomatic.jar.dependencies"
       value="${dist.jar.dependencies} commons-dbcp commons-pool mchange-commons" />

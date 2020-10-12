@@ -1157,6 +1157,24 @@ ORDER BY UPPER(PN.name), P.id
   </query>
 </mode>
 
+<mode name="fast_matching_package_ids_not_in_other_channel" class="com.redhat.rhn.frontend.dto.PackageDto">
+  <query params="scid, dcid">
+SELECT cp.package_id AS id
+  FROM rhnChannelPackage  cp
+  JOIN rhnPackage p ON (cp.package_id = p.id)
+  JOIN rhnPackageName pn ON (p.name_id = pn.id)
+ WHERE cp.channel_id = :scid
+   AND pn.name IN (%s)
+MINUS
+SELECT cp.package_id AS id
+  FROM rhnChannelPackage  cp
+  JOIN rhnPackage p ON (cp.package_id = p.id)
+  JOIN rhnPackageName pn ON (p.name_id = pn.id)
+ WHERE cp.channel_id = :dcid
+   AND pn.name IN (%s)
+  </query>
+</mode>
+
 <mode name="all_packages_in_channel_after_by_date">
   <query params="cid, start_date_str">
 SELECT

@@ -50,5 +50,6 @@
         <archive path="/usr/share/java/tanukiwrapper.jar"/>
         <archive path="/usr/share/java/concurrent.jar"/>
         <archive path="/usr/share/java/jakarta-commons-discovery.jar"/>
+	<archive path="/usr/share/java/snakeyaml.jar"/>
     </library>
 </eclipse-userlibraries>
