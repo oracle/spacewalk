@@ -186,6 +186,8 @@ def channel_exists(channel, quiet=False):
 
 
 def merge_channels(source_label, dest_label):
+    updateModulesFile = True
+
     if dest_label.startswith('rhel') and not options.tolerant:
         logging.error("Destination label starts with 'rhel'.  Aborting!")
         logging.error("Pass --tolerant to override this")
@@ -199,29 +201,60 @@ def merge_channels(source_label, dest_label):
                 return
 
     # remove all the packages from the channel if requested
-    if options.clear_channel or options.rollback:
-        clear_channel(dest_label)
-
-    logging.info('Merging packages from %s into %s' %
-                 (source_label, dest_label))
+    if options.clear_channel:
+        updateModulesFile = False
 
     if not options.dry_run:
-        # merge the packages from one channel into another
-        try:
-            packages = client.channel.software.mergePackages(session,
-                                                             source_label,
-                                                             dest_label)
-
-            logging.info('Added %i packages' % len(packages))
-        except xmlrpclib.Fault, e:
-            if options.debug:
-                logging.exception(e)
-            logging.error('Failed to merge packages')
-
-            if options.tolerant:
-                return False
+        # Clearing a channel is the same as a rollback; they both just set the state
+        # of the dest channel to that of the source channel. The only difference is
+        # during rollback the source is older than dest.
+        # We use XMLRPC rollbackChannel() when clearing a channel because it copies
+        # the modules.yaml file, which is much faster than computing the modules delta
+        # that occurs during XMLRPC mergePackages()
+        if options.rollback or options.clear_channel:
+            if options.rollback:
+                logging.info('Rolling back channel %s to %s' % (dest_label, source_label))
             else:
-                sys.exit(1)
+                logging.info('Clearing all packages and errata from %s' % dest_label)
+
+            # rollback the channel to archive state
+            try:
+                logging.info('Merging packages from %s into %s' %
+                             (source_label, dest_label))
+                packages = client.channel.software.rollbackChannel(session,
+                                                                   source_label,
+                                                                   dest_label)
+
+                logging.info('Added %i packages' % len(packages))
+            except xmlrpclib.Fault, e:
+                if options.debug:
+                    logging.exception(e)
+                    logging.error('Failed to rollback channel')
+
+                    if options.tolerant:
+                        return False
+                    else:
+                        sys.exit(1)
+        else:
+            # merge the packages from one channel into another
+            try:
+                logging.info('Merging packages from %s into %s' %
+                             (source_label, dest_label))
+                packages = client.channel.software.mergePackages(session,
+                                                                 source_label,
+                                                                 dest_label,
+                                                                 updateModulesFile)
+
+                logging.info('Added %i packages' % len(packages))
+            except xmlrpclib.Fault, e:
+                if options.debug:
+                    logging.exception(e)
+                    logging.error('Failed to merge packages')
+
+                    if options.tolerant:
+                        return False
+                    else:
+                        sys.exit(1)
 
     if not options.no_errata:
         logging.info('Merging errata into %s' % dest_label)
@@ -270,30 +303,6 @@ def clone_channel(source_label, details):
                 return False
             else:
                 sys.exit(1)
-
-
-def clear_channel(label):
-    logging.info('Clearing all errata from %s' % label)
-
-    if not options.dry_run:
-        # attempt to clear the errata from the channel
-        try:
-            all_errata = client.channel.software.listErrata(session, label)
-            errata_names = [e.get('advisory_name') for e in all_errata]
-            client.channel.software.removeErrata(session,
-                                                 label,
-                                                 errata_names,
-                                                 False)
-        except xmlrpclib.Fault, e:
-            if options.debug:
-                logging.exception(e)
-            logging.warning('Failed to clear errata from %s' % label)
-
-    if not options.dry_run:
-        logging.info('Clearing all packages from %s' % label)
-        all_packages = client.channel.software.listAllPackages(session, label)
-        package_ids = [p.get('id') for p in all_packages]
-        client.channel.software.removePackages(session, label, package_ids)
 
 
 def get_current_phase(source):

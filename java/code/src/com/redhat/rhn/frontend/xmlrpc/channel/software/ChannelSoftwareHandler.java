@@ -38,6 +38,7 @@ import com.redhat.rhn.domain.kickstart.crypto.CryptoKey;
 import com.redhat.rhn.domain.org.Org;
 import com.redhat.rhn.domain.rhnpackage.Package;
 import com.redhat.rhn.domain.rhnpackage.PackageFactory;
+import com.redhat.rhn.domain.rhnset.RhnSet;
 import com.redhat.rhn.domain.role.Role;
 import com.redhat.rhn.domain.role.RoleFactory;
 import com.redhat.rhn.domain.server.Server;
@@ -74,6 +75,9 @@ import com.redhat.rhn.manager.channel.repo.EditRepoCommand;
 import com.redhat.rhn.manager.errata.ErrataManager;
 import com.redhat.rhn.manager.errata.cache.ErrataCacheManager;
 import com.redhat.rhn.manager.kickstart.crypto.NoSuchCryptoKeyException;
+import com.redhat.rhn.manager.rhnpackage.PackageManager;
+import com.redhat.rhn.manager.rhnset.RhnSetDecl;
+import com.redhat.rhn.manager.rhnset.RhnSetManager;
 import com.redhat.rhn.manager.system.SystemManager;
 import com.redhat.rhn.manager.user.UserManager;
 import com.redhat.rhn.taskomatic.TaskomaticApi;
@@ -2219,6 +2223,32 @@ public class ChannelSoftwareHandler extends BaseHandler {
      */
     public Object[] mergePackages(User loggedInUser, String mergeFromLabel,
             String mergeToLabel) {
+        return mergePackages(loggedInUser, mergeFromLabel, mergeToLabel, false);
+    }
+
+    /**
+     * Merge a channel's packages into another channel.
+     * @param loggedInUser The current user
+     * @param mergeFromLabel the label of the channel to pull the packages from
+     * @param mergeToLabel the label of the channel to push packages into
+     * @param updateModulesFile whether to update the channel's modules.yaml file
+     * @return A list of packages that were merged.
+     *
+     * @xmlrpc.doc Merges all packages from one channel into another
+     * @xmlrpc.param #session_key()
+     * @xmlrpc.param #param_desc("string", "mergeFromLabel", "the label of the
+     *          channel to pull packages from")
+     * @xmlrpc.param #param_desc("string", "mergeToLabel", "the label to push the
+     *              packages into")
+     * @xmlrpc.param #param_desc("boolean", "updateModulesFile", "whether to update
+     * the channel's modules.yaml file")
+     * @xmlrpc.returntype
+     *      #array()
+     *          $PackageSerializer
+     *      #array_end()
+     */
+    public Object[] mergePackages(User loggedInUser, String mergeFromLabel,
+                                  String mergeToLabel, boolean updateModulesFile) {
 
         Channel mergeFrom = lookupChannelByLabel(loggedInUser, mergeFromLabel);
         Channel mergeTo = lookupChannelByLabel(loggedInUser, mergeToLabel);
@@ -2231,15 +2261,27 @@ public class ChannelSoftwareHandler extends BaseHandler {
 
         Set<Package> toPacks = mergeTo.getPackages();
         Set<Package> fromPacks = mergeFrom.getPackages();
+        RhnSet pkgRhnSet = RhnSetDecl.PACKAGES_TO_ADD.get(loggedInUser);
         List<Long> pids = new ArrayList<Long>();
         for (Package pack : fromPacks) {
             if (!toPacks.contains(pack)) {
                 pids.add(pack.getId());
                 differentPackages.add(pack);
+                pkgRhnSet.addElement(pack.getId());
             }
         }
-        mergeTo.getPackages().addAll(differentPackages);
-        ChannelFactory.save(mergeTo);
+
+        if (updateModulesFile) {
+            RhnSetManager.store(pkgRhnSet);
+            PackageManager.addChannelPackagesFromSet(loggedInUser, mergeFrom.getId(), mergeTo.getId(), pkgRhnSet);
+            pkgRhnSet.clear();
+            RhnSetManager.store(pkgRhnSet);
+        }
+        else {
+            mergeTo.getPackages().addAll(differentPackages);
+            ChannelFactory.save(mergeTo);
+        }
+
         ChannelManager.refreshWithNewestPackages(mergeTo, "java::mergePackages");
 
         List<Long> cids = new ArrayList<Long>();
@@ -2247,6 +2289,39 @@ public class ChannelSoftwareHandler extends BaseHandler {
         ErrataCacheManager.insertCacheForChannelPackagesAsync(cids, pids);
         return differentPackages.toArray();
     }
+
+
+    /**
+     * Rollback a channel to an archive state
+     * @param loggedInUser The current user
+     * @param rollbackLabel the label of the archive channel to rollback to
+     * @param targetLabel the label of the channel to rollback
+     * @return A list of packages that were added during rollback
+     *
+     * @xmlrpc.doc Rollback a channel to an archive state
+     * @xmlrpc.param #session_key()
+     * @xmlrpc.param #param_desc("string", "rollbackLabel", "the label of the
+     *          channel to rollback to")
+     * @xmlrpc.param #param_desc("string", "targetLabel", "the label of the channel
+     * to rollback")
+     * @xmlrpc.returntype
+     *      #array()
+     *          $PackageSerializer
+     *      #array_end()
+     */
+    public Object[] rollbackChannel(User loggedInUser, String rollbackLabel, String targetLabel) {
+        Channel rollbackChannel = lookupChannelByLabel(loggedInUser, rollbackLabel);
+        Channel targetChannel = lookupChannelByLabel(loggedInUser, targetLabel);
+
+        if (!UserManager.verifyChannelAdmin(loggedInUser, targetChannel)) {
+            throw new PermissionCheckFailureException();
+        }
+
+        clear(loggedInUser, targetLabel);
+        ChannelManager.cloneChannelModulesFile(rollbackChannel, targetChannel);
+        return mergePackages(loggedInUser, rollbackLabel, targetLabel, false);
+    }
+
 
     /**
      * Regenerate the errata cache for all the systems subscribed to a particular channel
@@ -3140,6 +3215,50 @@ public class ChannelSoftwareHandler extends BaseHandler {
         ContentSource cs = lookupContentSourceByLabel(label, loggedInUser.getOrg());
 
         ChannelFactory.clearContentSourceFilters(cs.getId());
+
+        return 1;
+    }
+
+    /**
+     * Clears a software channel by removing all packages and errata. The modules.yaml
+     * file will also be cleared.
+     * @param loggedInUser The current user
+     * @param label Label of channel to be cleared.
+     * @return 1 if Channel was successfully cleared.
+     * @throws FaultException A FaultException is thrown if:
+     *   - The user is not a channel admin for the channel
+     *   - The channel is invalid
+     *   - The user doesn't have access to clear the channel
+     *
+     * @xmlrpc.doc Clears a software channel by removing all packages and errata.
+     * The modules.yaml file will also be cleared.
+     * @xmlrpc.param #session_key()
+     * @xmlrpc.param #param_desc("string", "channelLabel", "channel to clear")
+     * @xmlrpc.returntype #return_int_success()
+     */
+    public int clear(User loggedInUser, String label) {
+        Channel channel = lookupChannelByLabel(loggedInUser, label);
+        if (!UserManager.verifyChannelAdmin(loggedInUser, channel)) {
+            throw new PermissionCheckFailureException();
+        }
+
+        List<Map<String, Object>> errataList = listErrata(loggedInUser, label);
+        List<String> errataNames = new ArrayList<String>();
+
+        for (Map<String, Object> errataMap : errataList) {
+            errataNames.add((String)errataMap.get("advisory_name"));
+        }
+        removeErrata(loggedInUser, label, errataNames, false);
+
+        List<PackageDto> pkgList = listAllPackages(loggedInUser, label);
+        List<Long> pkgIdList = new ArrayList<Long>();
+
+        for (PackageDto pkg : pkgList) {
+            pkgIdList.add(pkg.getId());
+        }
+        removePackages(loggedInUser, label, pkgIdList);
+
+        ChannelManager.clearChannelModulesFile(channel);
 
         return 1;
     }
