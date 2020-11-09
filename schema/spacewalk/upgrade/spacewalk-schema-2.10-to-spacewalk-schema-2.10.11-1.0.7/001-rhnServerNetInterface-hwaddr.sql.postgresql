@@ -1,0 +1,4 @@
+-- oracle equivalent source sha1 d8a0812f1476584bf08a42fffe56dc1eff0636f5
+
+ALTER TABLE rhnServerNetInterface
+ALTER COLUMN hw_addr TYPE VARCHAR(60);
