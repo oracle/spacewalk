@@ -200,7 +200,7 @@ class Runner:
         except xmlWireSource.rpclib.xmlrpclib.Fault:
             e = sys.exc_info()[1]
             if CFG.ISS_PARENT:
-                if CFG.PRODUCT_NAME == 'Spacewalk':
+                if CFG.PRODUCT_NAME == 'Spacewalk' or CFG.PRODUCT_NAME == 'Oracle Linux Manager':
                     log(-1, ['', messages.sw_iss_not_available % e.faultString], )
                 else:
                     log(-1, ['', messages.sat_iss_not_available % e.faultString], )

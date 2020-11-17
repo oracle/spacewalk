@@ -907,19 +907,19 @@
         </context-group>
       </trans-unit>
       <trans-unit id="login.jsp.satbody1">
-        <source>&lt;strong&gt;@@PRODUCT_NAME@@&lt;/strong&gt; is an open source (GPLv2) Linux systems management solution. Below are some links that should prove useful if you have any questions regarding your @@PRODUCT_NAME@@ server. </source>
+        <source>&lt;strong&gt;@@PRODUCT_NAME@@&lt;/strong&gt; is an open source (GPLv2) Linux systems management solution, based on @@BASED_ON_NAME@@. Below are some links that should prove useful if you have any questions regarding your @@PRODUCT_NAME@@ server. </source>
         <context-group name="ctx">
           <context context-type="sourcefile">/rhn/Login</context>
         </context-group>
       </trans-unit>
       <trans-unit id="login.jsp.satbody2">
-        <source>For details on @@PRODUCT_NAME@@, please visit our web-site at &lt;a href="http://www.spacewalkproject.org/" target="_blank"&gt; http://www.spacewalkproject.org/&lt;/a&gt;. </source>
+        <source>@@PRODUCT_NAME@@ is based on the &lt;a href="http://www.spacewalkproject.org/" target="_blank"&gt; @@BASED_ON_NAME@@ Project&lt;/a&gt;, which was discontinued on 31 May 2020. </source>
         <context-group name="ctx">
           <context context-type="sourcefile">/rhn/Login</context>
         </context-group>
       </trans-unit>
       <trans-unit id="login.jsp.satbody3">
-        <source>For details on interacting with the @@PRODUCT_NAME@@ community, please visit us at  &lt;a href="http://www.spacewalkproject.org/communicate.html" target="_blank"&gt; http://www.spacewalkproject.org/communicate.html&lt;/a&gt;. </source>
+        <source>Updates made for @@PRODUCT_NAME@@ are &lt;a href="https://github.com/oracle/spacewalk" target="_blank"&gt; published on Oracle's @@BASED_ON_NAME@@ repository on GitHub&lt;/a&gt;. </source>
         <context-group name="ctx">
           <context context-type="sourcefile">/rhn/Login</context>
         </context-group>
@@ -19302,10 +19302,10 @@ given channel.</source>
         <source>@@PRODUCT_NAME@@ project</source>
       </trans-unit>
       <trans-unit id="layout.jsp.vendor.title">
-        <source>Visit http://www.spacewalkproject.org/ for more information</source>
+        <source>Visit http://linux.oracle.com/ for more information</source>
       </trans-unit>
       <trans-unit id="layout.jsp.vendor.website">
-        <source>http://www.spacewalkproject.org/</source>
+        <source>http://linux.oracle.com/</source>
       </trans-unit>
       <trans-unit id="filelist.jsp.title">
         <source>File List</source>
