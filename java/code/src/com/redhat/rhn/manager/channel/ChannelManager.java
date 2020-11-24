@@ -32,6 +32,7 @@ import com.redhat.rhn.domain.channel.ChannelFactory;
 import com.redhat.rhn.domain.channel.ChannelFamily;
 import com.redhat.rhn.domain.channel.ChannelFamilyFactory;
 import com.redhat.rhn.domain.channel.ChannelVersion;
+import com.redhat.rhn.domain.channel.ClearModuleMetadataFileFailedException;
 import com.redhat.rhn.domain.channel.ClonedChannel;
 import com.redhat.rhn.domain.channel.CopyModuleMetadataFileFailedException;
 import com.redhat.rhn.domain.channel.DistChannelMap;
@@ -74,6 +75,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -2646,9 +2648,6 @@ public class ChannelManager extends BaseManager {
      */
     public static void cloneChannelModulesFile(Channel original, Channel clone)
         throws CopyModuleMetadataFileFailedException {
-        // Have to reload to get modules
-        original = (Channel) ChannelFactory.reload(original);
-        clone = (Channel) ChannelFactory.reload(clone);
 
         if (original.getModules() == null) {
             return;
@@ -2701,4 +2700,33 @@ public class ChannelManager extends BaseManager {
         cloneModules.setRelativeFilename(cloneRelativePath);
         clone.setModules(cloneModules);
     }
+
+    /**
+     * Clear the modules metadata file for a channel.
+     * @param channel Channel concerned
+     * @throws ClearModuleMetadataFileFailedException thrown on error clearing modules.yaml file
+     */
+    public static void clearChannelModulesFile(Channel channel)
+        throws ClearModuleMetadataFileFailedException {
+
+        if (channel.getModules() == null) {
+            return;
+        }
+
+        final String relativePath = channel.getModules().getRelativeFilename();
+        final String fqPath = Config.get().getString(ConfigDefaults.MOUNT_POINT) +
+            "/" + relativePath;
+
+        try {
+            // File is automatically truncated on open
+            PrintWriter pw = new PrintWriter(fqPath);
+            pw.close();
+        }
+        catch (final Exception e) {
+            final String errMsg = "Unable to clear modules.yaml for channel label: " + channel.getLabel();
+            log.error(errMsg, e);
+            throw new ClearModuleMetadataFileFailedException(errMsg);
+        }
+    }
+
 }
