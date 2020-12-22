@@ -57,6 +57,8 @@ public final class XmlMessages {
 
     public static final String PRODUCT_NAME_MACRO = "@@PRODUCT_NAME@@";
 
+    public static final String BASED_ON_NAME_MACRO = "@@BASED_ON_NAME@@";
+
     private static final Logger LOG = Logger.getLogger(XmlMessages.class);
 
     private static XmlMessages instance = new XmlMessages();
@@ -245,6 +247,9 @@ public final class XmlMessages {
 
         pattern = pattern.replaceAll(PRODUCT_NAME_MACRO,
                 Config.get().getString("web.product_name"));
+
+        pattern = pattern.replaceAll(BASED_ON_NAME_MACRO,
+                                     Config.get().getString("web.based_on_name"));
 
         if (args == null || args.length == 0) {
             return pattern;

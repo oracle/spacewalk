@@ -79,6 +79,7 @@ public class ConfigDefaults {
     public static final String DEFAULT_SAT_PARENT = "satellite.rhn.redhat.com";
 
     public static final String PRODUCT_NAME = "web.product_name";
+    public static final String BASED_ON_NAME = "web.based_on_name";
 
     private static final String COBBLER_AUTOMATED_USER = "java.taskomatic_cobbler_user";
 
