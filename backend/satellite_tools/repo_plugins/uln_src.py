@@ -32,7 +32,7 @@ DEFAULT_UP2DATE_URL = "linux-update.oracle.com"
 
 class ContentSource(yum_ContentSource):
 
-    def __init__(self, url, name, org="1", channel_label="", no_mirrors=False, ca_cert_file=None,
+    def __init__(self, url, name, org="1", channel_label="", no_mirrors=True, ca_cert_file=None,
                  client_cert_file=None, client_key_file=None):
         if url[:6] != "uln://":
             raise RhnSyncException("url format error, url must start with uln://")
