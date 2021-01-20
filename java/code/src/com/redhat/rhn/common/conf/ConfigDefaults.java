@@ -76,7 +76,7 @@ public class ConfigDefaults {
 
     public static final String DISCONNECTED = "disconnected";
 
-    public static final String DEFAULT_SAT_PARENT = "satellite.rhn.redhat.com";
+    public static final String DEFAULT_SAT_PARENT = "";
 
     public static final String PRODUCT_NAME = "web.product_name";
     public static final String BASED_ON_NAME = "web.based_on_name";

@@ -843,13 +843,10 @@ sub populate_initial_configs {
     }
 
   my %rhnopt = ();
-  if ($answers->{disconnected} || $opts->{disconnected}) {
-    $rhnopt{'server.satellite.rhn_parent'} = '';
-    $rhnopt{'disconnected'} = "1";
-  }
-  else {
-    $rhnopt{'server.satellite.rhn_parent'} = $answers->{'rhn-parent'} || 'satellite.rhn.redhat.com';
-  }
+
+  $rhnopt{'server.satellite.rhn_parent'} = '';
+  $rhnopt{'disconnected'} = "1";
+
   for my $key (qw/product_name web.version enable_nvrea web.subscribe_proxy_channel force_package_upload
           web.l10n_resourcebundles web.default_mail_from/) {
     if (defined($answers->{$key})) {
