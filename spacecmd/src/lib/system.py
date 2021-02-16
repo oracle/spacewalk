@@ -3480,11 +3480,13 @@ def do_system_comparewithchannel(self, args):
 
         instpkgs = self.client.system.listPackages(self.session,
                                                    system_id)
+
         logging.debug("Got %d packages installed in system %s" %
                       (len(instpkgs), system))
         # We need to filter to get only the latest installed packages,
         # because multiple versions (e.g kernel) can be installed
         packages = filter_latest_packages(instpkgs)
+
         logging.debug("Got latest %d packages installed in system %s" %
                       (len(packages.keys()), system))
 
@@ -3524,11 +3526,13 @@ def do_system_comparewithchannel(self, args):
                 logging.debug("Getting packages for channel %s" % c)
                 pkgs = self.client.channel.software.listAllPackages(
                     self.session, c)
+
                 # filter_latest_packages Returns a dict of latest packages
                 # indexed by name,arch tuple, which we add to the dict-of-dict
                 # channel_latest, to avoid getting the same channel data
                 # multiple times when processing more than one system
                 channel_latest[c] = filter_latest_packages(pkgs)
+
             # Merge the channel latest dicts into one latestpkgs dict
             # We handle collisions and only store the latest version
             # We do this for every channel of every system, since the mix of
@@ -3538,7 +3542,10 @@ def do_system_comparewithchannel(self, args):
                     latestpkgs[key] = channel_latest[c][key]
                 else:
                     p_newest = latest_pkg(channel_latest[c][key], latestpkgs[key])
-                    latestpkgs[key] = p_newest
+
+                    # None means they're the same. Do nothing
+                    if p_newest is not None:
+                        latestpkgs[key] = p_newest
 
         if len(systems) > 1:
             print('\nSystem: %s' % system)

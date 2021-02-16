@@ -361,8 +361,15 @@ def parse_time_input(userinput=''):
 
 # Compares 2 package objects (dicts) and returns the newest one.
 # If the objects are the same, we return None
+# If either object is None, return the other
+# If both are None, return None
 def latest_pkg(pkg1, pkg2, version_key='version',
                release_key='release', epoch_key='epoch'):
+    if pkg1 is None:
+        return pkg2
+    elif pkg2 is None:
+        return pkg1
+
     # Sometimes empty epoch is a space, sometimes its an empty string, which
     # breaks the comparison, strip it here to fix
     t1 = (pkg1[epoch_key].strip(), pkg1[version_key], pkg1[release_key])
