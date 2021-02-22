@@ -587,12 +587,12 @@ class RepoSync(object):
         for root, dirs, files in os.walk(rhn_path):
             for d in dirs:
                 if d == 'modules' or root.startswith(rhn_path + "/modules"):
-                    fileutils.setPermsPath(os.path.join(root, d), group='apache', chmod=0o770)
+                    fileutils.setPermsPath(os.path.join(root, d), user='tomcat', group='apache', chmod=0o770)
                 else:
                     fileutils.setPermsPath(os.path.join(root, d), group='apache')
             for f in files:
                 if root.startswith(rhn_path + "/modules"):
-                    fileutils.setPermsPath(os.path.join(root, f), group='apache', chmod=0o770)
+                    fileutils.setPermsPath(os.path.join(root, f), user='tomcat', group='apache', chmod=0o770)
                 else:
                     fileutils.setPermsPath(os.path.join(root, f), group='apache')
         elapsed_time = datetime.now() - start_time
