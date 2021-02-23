@@ -521,7 +521,7 @@ class RepoSync(object):
 
                     if not self.no_packages:
                         self.import_groups(plugin)
-                        if repo_type == "yum":
+                        if repo_type in {'yum', 'uln'}:
                             self.import_modules(plugin)
                         ret = self.import_packages(plugin, repo_id, is_non_local_repo)
                         failed_packages += ret
