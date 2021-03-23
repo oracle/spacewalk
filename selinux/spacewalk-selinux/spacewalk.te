@@ -23,6 +23,7 @@ require {
 	type faillog_t;
         type chkpwd_exec_t;
         type shadow_t;
+	type iso9660_t;
 	class dir { add_name write search };
         class file { create execute execute_no_trans open read };
 }
@@ -187,3 +188,6 @@ allow tomcat_t chkpwd_exec_t:file { execute execute_no_trans open read };
 allow tomcat_t faillog_t:dir { add_name search write };
 allow tomcat_t faillog_t:file create;
 allow tomcat_t shadow_t:file { open read };
+
+# Allow tomcat to search distro-trees ISOs
+allow tomcat_t iso9660_t:dir search;
