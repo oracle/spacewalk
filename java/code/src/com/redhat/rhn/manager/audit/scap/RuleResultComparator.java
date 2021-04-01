@@ -65,7 +65,7 @@ public class RuleResultComparator {
             throw new IllegalArgumentException();
         }
         if (first != null && second != null &&
-                first.getDocumentIdref().equals(second.getDocumentIdref())) {
+            (!first.getDocumentIdref().equals(second.getDocumentIdref()))) {
             throw new IllegalArgumentException();
         }
         second = secondIn;
