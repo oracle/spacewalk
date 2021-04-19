@@ -90,3 +90,4 @@ rhnUserChannelFamilyPerms        :: rhnPrivateChannelFamily \
 rhnWebContactEnabled             :: web_contact rhnWebContactDisabled
 rhnOrgChannelFamilyPermissions   :: rhnPublicChannelFamily web_contact \
                                     rhnPrivateChannelFamily
+rhnServerNeededPackageCache      :: rhnPackage rhnPackageEVR rhnServerNeededCache

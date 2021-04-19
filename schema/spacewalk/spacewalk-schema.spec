@@ -3,7 +3,7 @@
 Name:           spacewalk-schema
 Summary:        SQL schema for Spacewalk server
 
-Version:        2.10.11
+Version:        2.10.12
 Release:        1%{?dist}
 Source0:        %{name}-%{version}.tar.gz
 
@@ -93,6 +93,10 @@ install -m 755 schema-source-sanity-check.pl $RPM_BUILD_ROOT%{_bindir}/schema-so
 %attr(755,root,root) %{_bindir}/schema-source-sanity-check.pl
 
 %changelog
+* Tue Apr 20 2021 Laurence Rochfort <laurence.rocfort@oracle.com> 2.10.12-1
+- Fix incorrect OL8 outdated package count on system overview page. [Orabug: 32648538]
+- Bump version to trigger schema upgrade
+
 * Wed Feb 26 2020 Michael Mraka <michael.mraka@redhat.com> 2.10.11-1
 - schema upgrade for new distribution keys
 - added gpg keys for new OS versions
