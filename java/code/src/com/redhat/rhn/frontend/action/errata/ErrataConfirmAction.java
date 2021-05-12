@@ -122,7 +122,7 @@ public class ErrataConfirmAction extends RhnListDispatchAction {
                  args[0] = currentErrata.getAdvisoryName();
                  args[1] = new Long(systems.size());
                  args[2] = currentErrata.getId().toString();
-                 args[3] = update.getId();
+                 args[3] = update.getId().toString();
              }
              else {
                  int sortOrder = ActionChainFactory.getNextSortOrderValue(actionChain);
