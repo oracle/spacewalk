@@ -4,7 +4,7 @@ Name:           spacewalk-schema
 Summary:        SQL schema for Spacewalk server
 
 Version:        2.10.12
-Release:        1%{?dist}
+Release:        2%{?dist}
 Source0:        %{name}-%{version}.tar.gz
 
 License:        GPLv2
