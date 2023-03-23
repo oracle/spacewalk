@@ -14,6 +14,11 @@
 --
 insert into rhnKSInstallType (id, label, name)
         values (sequence_nextval('rhn_ksinstalltype_id_seq'),
+                'rhel_9','Oracle Linux 9/Red Hat Enterprise Linux 9'
+        );
+
+insert into rhnKSInstallType (id, label, name)
+        values (sequence_nextval('rhn_ksinstalltype_id_seq'),
                 'rhel_8','Oracle Linux 8/Red Hat Enterprise Linux 8'
         );
 
