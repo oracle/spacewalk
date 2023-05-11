@@ -23,6 +23,7 @@ from importLib import GenericPackageImport, IncompletePackage, \
     Import, InvalidArchError, InvalidChannelError, \
     IncompatibleArchError
 from mpmSource import mpmBinaryPackage
+from spacewalk.common.rhnLog import log_debug, log_error
 from spacewalk.common import rhn_pkg
 from spacewalk.common.rhnConfig import CFG
 from spacewalk.server import taskomatic
@@ -188,16 +189,14 @@ class ChannelPackageSubscription(GenericPackageImport):
             if not archCompat:
                 # Invalid architecture
                 sourcePackage.ignored = 1
-                raise InvalidArchError(charch,
-                                       "Invalid channel architecture %s" % charch)
+                log_debug(3, "Invalid channel architecture %s", charch)
 
             # Now check if the source package's arch is compatible with the
             # current channel
             if sourcePackage['package_arch_id'] not in archCompat:
                 sourcePackage.ignored = 1
-                raise IncompatibleArchError(sourcePackage.arch, charch,
-                                            "Package arch %s incompatible with channel %s" %
-                                            (sourcePackage.arch, schannelName))
+                log_debug(3, "Package arch %s incompatible with channel %s",
+                          sourcePackage.arch, schannelName)
 
             dpHash[channel['id']] = schannelName
 

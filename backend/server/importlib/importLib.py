@@ -18,6 +18,7 @@
 
 import os
 import shutil
+from spacewalk.common.rhnLog import log_debug, log_error
 from spacewalk.common.usix import IntType, StringType, InstanceType
 from UserDict import UserDict
 try:
@@ -727,8 +728,7 @@ class GenericPackageImport(Import):
         if not arch:
             # Unsupported arch
             package.ignored = 1
-            raise InvalidArchError(package.arch,
-                                   "Unknown arch %s" % package.arch)
+            log_debug(3, "Unkown arch %s", package.arch)
 
 #        package['package_arch_id'] = arch
 #        package['name_id'] = self.names[package.name]
