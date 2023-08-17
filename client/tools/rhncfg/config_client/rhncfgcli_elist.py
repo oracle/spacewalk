@@ -32,7 +32,7 @@ class Handler(handler_base.HandlerBase):
             finfo = r.get_file_info(file[1])[1]
             # Get the file length
             if finfo['encoding'] == 'base64':
-                fsize = len(base64.decodestring(bstr(finfo['file_contents'])))
+                fsize = len(base64.decodebytes(bstr(finfo['file_contents'])))
             else:
                 # * indicates raw 'unencoded' size
                 fsize = '*' + str(len(finfo['file_contents']))

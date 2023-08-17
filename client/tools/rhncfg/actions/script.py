@@ -22,7 +22,7 @@ import select
 import signal
 import tempfile
 import base64
-
+from rhn.i18n import bstr
 try:
     MAXFD = os.sysconf("SC_OPEN_MAX")
 except:
@@ -282,7 +282,7 @@ def run(action_id, params, cache_only=None):
     # since output can contain chars that won't make xmlrpc very happy,
     # base64 encode it...
     extras['base64enc'] = 1
-    extras['output'] = base64.encodestring(extras['output'])
+    extras['output'] = base64.encodebytes(bstr(extras['output']))
 
     extras['return_code'] = exit_status
 

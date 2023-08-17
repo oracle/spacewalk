@@ -120,7 +120,7 @@ class Handler(handler_base.HandlerBase):
             info = r.get_raw_file_info(channel, path, revision)
             if 'encoding' in info and info['file_contents']:
                 if info['encoding'] == 'base64':
-                    info['file_contents'] = base64.decodestring(bstr(info['file_contents']))
+                    info['file_contents'] = base64.decodebytes(bstr(info['file_contents']))
                 else:
                     die(9, 'Error: unknown encoding %s' % info['encoding'])
         except cfg_exceptions.RepositoryFileMissingError:

@@ -33,10 +33,6 @@ from config_common import utils
 from config_common.local_config import get as get_config
 from rhn.i18n import bstr, sstr
 
-decodestring = base64.decodestring
-if hasattr(base64, 'decodebytes'):
-    decodestring = base64.decodebytes
-
 class FileProcessor:
     file_struct_fields = {
         'file_contents'     : None,
@@ -80,7 +76,7 @@ class FileProcessor:
         contents = file_struct['file_contents']
 
         if contents and (encoding == 'base64'):
-            contents = decodestring(bstr(contents))
+            contents = base64.decodebytes(bstr(contents))
 
         delim_start = file_struct['delim_start']
         delim_end = file_struct['delim_end']

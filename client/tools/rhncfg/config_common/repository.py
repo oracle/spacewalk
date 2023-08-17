@@ -25,6 +25,7 @@ from config_common import local_config
 from config_common import utils
 from config_common.rhn_log import log_debug
 from rhn import rpclib
+from rhn.i18n import bstr
 Output = rpclib.transports.Output
 
 try: # python2
@@ -210,7 +211,7 @@ class Repository:
         """Add the file contents to the params hash"""
 
         params['enc64'] = 1
-        params['file_contents'] = base64.encodestring(file_contents)
+        params['file_contents'] = base64.encodebytes(bstr(file_contents))
 
     def login(self, username=None, password=None):
         pass
@@ -404,7 +405,7 @@ class RPC_Repository(Repository):
         # data if the server is capable of descoding it
         if 'rhncfg.content.base64_decode' in self._server_capabilities:
             params['enc64'] = 1
-            params['file_contents'] = base64.encodestring(file_contents)
+            params['file_contents'] = base64.encodebytes(bstr(file_contents))
         else:
             params['file_contents'] = file_contents
 
