@@ -2680,7 +2680,7 @@ public class ChannelManager extends BaseManager {
         catch (Exception e) {
             String errMsg = "Unable to clone metadata file: " + originalFQPath;
             log.error(errMsg, e);
-            throw new CopyMetadataFileFailedException(errMsg);
+            throw new CopyMetadataFileFailedException(errMsg, e);
         }
     }
 
