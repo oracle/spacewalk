@@ -14,6 +14,7 @@ require {
 	type tomcat_t;
 	type restorecon_t;
 	type httpd_sys_script_t;
+	type httpd_sys_content_t;
 	type httpd_log_t;
 	type initrc_t;
 	type system_mail_t;
@@ -24,8 +25,8 @@ require {
         type chkpwd_exec_t;
         type shadow_t;
 	type iso9660_t;
-	class dir { add_name write search };
-        class file { create execute execute_no_trans open read };
+	class dir { add_name write search create remove_name setattr write };
+        class file { create execute execute_no_trans open read getattr setattr unlink write };
 }
 
 type spacewalk_install_log_t;
@@ -191,3 +192,7 @@ allow tomcat_t shadow_t:file { open read };
 
 # Allow tomcat to search distro-trees ISOs
 allow tomcat_t iso9660_t:dir search;
+
+# Allow tomcat to operate on comps trees
+allow tomcat_t httpd_sys_content_t:dir { add_name create remove_name setattr write };
+allow tomcat_t httpd_sys_content_t:file { create getattr open read setattr unlink write };
