@@ -1,3 +1,4 @@
+-- oracle equivalent source sha1 228cf61736e16f06f75c2357560f928daf7f34f2
 --
 -- Copyright (C) 2024 Oracle and/or its affiliates.
 --
@@ -17,34 +18,4 @@
 -- 02110-1301, USA.
 --
 
-CREATE MATERIALIZED VIEW RHNSERVERNEEDEDPACKAGECACHE ("SERVER_ID", "PACKAGE_ID", "ERRATA_ID")
-REFRESH FORCE ON DEMAND
-ENABLE QUERY REWRITE
-AS
-SELECT
-	SNC.server_id,
-	SNC.package_id,
-	max(SNC.errata_id) AS errata_id
-FROM
-	rhnPackageEVR PE,
-	rhnPackage P,
-	rhnServerNeededCache SNC
-LEFT OUTER JOIN rhnErrata E ON SNC.errata_id = E.id
-WHERE
-	SNC.package_id = P.id
-	AND P.evr_id = PE.id
-	AND ((pe.modular = 0)
-		OR (pe.modular = 1
-			AND regexp_substr(E.synopsis, '[^ ]+:[^ ]+') IN (
-			SELECT
-				module_stream
-			FROM
-				rhnservermodulesview
-			WHERE
-				server_id = SNC.server_id)))
-GROUP BY
-	snc.server_id,
-	snc.package_id;
-
-
-CREATE INDEX RSNPC_SID_PID_IDX ON RHNSERVERNEEDEDPACKAGECACHE (SERVER_ID, PACKAGE_ID);
+-- NOT REQUIRED

@@ -77,12 +77,13 @@ rhnUserActionOverview            :: rhnActionStatus rhnUserServerPerms rhnServer
 rhnPackageChangeLog              :: rhnPackageChangeLogData rhnPackageChangeLogRec
 rhnUserReceiveNotifications      :: rhnUserServerPerms rhnWebContactDisabled web_contact \
                                     rhnUserInfo web_user_personal_info rhnUserServerPrefs
-rhnServerOverview                :: rhnUserServerPerms \
+rhnServerOverview_Backing        :: rhnUserServerPerms \
                                     rhnChannel rhnVisibleServerGroupMembers \
                                     rhnServerChannel rhnServerHistory \
                                     rhnPackage rhnServerNeededPackageCache \
                                     rhnServerErrataTypeView \
                                     rhn_entitlements.pks
+rhnServerOverview                :: rhnServerOverview_Backing
 rhnServerGroupOverview           :: rhnErrata rhnUserManagedServerGroups \
                                     rhnServerGroupMembers rhnServerGroup rhnServerFeaturesView
 rhnUserChannelFamilyPerms        :: rhnPrivateChannelFamily \

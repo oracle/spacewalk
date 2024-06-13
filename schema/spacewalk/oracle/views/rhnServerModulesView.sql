@@ -1,5 +1,5 @@
 --
--- Copyright (C) 2020 Oracle and/or its affiliates. All rights reserved.
+-- Copyright (C) 2024 Oracle and/or its affiliates.
 --
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License
@@ -16,8 +16,12 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 -- 02110-1301, USA.
 --
-CREATE OR REPLACE VIEW RHNSERVERMODULESVIEW (SERVER_ID, MODULE_STREAM) AS
- SELECT DISTINCT
+
+CREATE MATERIALIZED VIEW RHNSERVERMODULESVIEW ("SERVER_ID", "MODULE_STREAM")
+REFRESH FORCE ON DEMAND
+ENABLE QUERY REWRITE
+AS
+SELECT DISTINCT
    sp.server_id,
    regexp_substr(e.synopsis,'[^ ]+:[^ ]+') AS module_stream
  FROM
@@ -29,3 +33,6 @@ CREATE OR REPLACE VIEW RHNSERVERMODULESVIEW (SERVER_ID, MODULE_STREAM) AS
 WHERE
       pe.modular = 1
       AND regexp_substr(e.synopsis,'[^ ]+:[^ ]+') IS NOT NULL;
+
+
+CREATE INDEX RSMV_SID_IDX ON RHNSERVERMODULESVIEW (SERVER_ID);
