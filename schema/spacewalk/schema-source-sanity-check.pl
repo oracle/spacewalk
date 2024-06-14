@@ -102,7 +102,8 @@ sub check_file_content {
         } elsif ($type eq 'views') {
                 if (not $content =~ /^(--.*\n
                                         |\s*\n
-                                        |create(\s+or\s+replace)?\s+view\s+$name\b[^;]+;
+                                        |create(\s+or\s+replace)?\s+(materialized\s+)?view\s+$name\b[^;]+;
+					|create\s+(unique\s+|bitmap\s+)?index\s+\w+\s+on\s+$name[^;]+;
                                         )+$/ix) {
                         print "Bad $type content [$filename]\n";
                         $error = 1;
